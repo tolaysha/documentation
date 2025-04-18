@@ -39,6 +39,9 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="l5vB1xmRcoUgEGXJJuVW-41" value="idle" style="" vertex="1" parent="2">
+          <mxGeometry x="60" y="412" width="110" height="50" as="geometry" />
+        </mxCell>
         <mxCell id="3" value="Thread 2" style="swimlane;whiteSpace=wrap" parent="1" vertex="1">
           <mxGeometry x="444.5" y="128" width="280" height="570" as="geometry" />
         </mxCell>
