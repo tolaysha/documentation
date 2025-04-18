@@ -14,18 +14,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Download Draw.io (diagrams.net) CLI
+      - name: Download and extract Draw.io AppImage
         run: |
           curl -L -o drawio.AppImage https://github.com/jgraph/drawio-desktop/releases/download/v21.7.2/drawio-x86_64-21.7.2.AppImage
           chmod +x drawio.AppImage
+          ./drawio.AppImage --appimage-extract
+          ln -s squashfs-root/drawio drawio-cli
 
       - name: Export .drawio to PNG and SVG
         run: |
           for file in $(find . -name "*.drawio"); do
             base="${file%.drawio}"
             echo "Exporting $file..."
-            ./drawio.AppImage --export "$file" --output "${base}.drawio.png" --format png
-            ./drawio.AppImage --export "$file" --output "${base}.drawio.svg" --format svg
+            ./drawio-cli --export "$file" --output "${base}.drawio.png" --format png
+            ./drawio-cli --export "$file" --output "${base}.drawio.svg" --format svg
           done
 
       - name: Commit and push exported files
