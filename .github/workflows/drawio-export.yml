@@ -11,33 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download and extract Draw.io AppImage
-        run: |
-          curl -L -o drawio.AppImage https://github.com/jgraph/drawio-desktop/releases/download/v21.7.2/drawio-x86_64-21.7.2.AppImage
-          chmod +x drawio.AppImage
-          ./drawio.AppImage --appimage-extract
-          ln -s squashfs-root/drawio drawio-cli
+      - name: Build Docker image
+        run: docker build -t drawio-exporter .
 
-      - name: Export .drawio to PNG and SVG
+      - name: Run drawio-export in container
         run: |
-          for file in $(find . -name "*.drawio"); do
-            base="${file%.drawio}"
-            echo "Exporting $file..."
-            ./drawio-cli --export "$file" --output "${base}.drawio.png" --format png
-            ./drawio-cli --export "$file" --output "${base}.drawio.svg" --format svg
-          done
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            drawio-exporter
 
-      - name: Commit and push exported files
+      - name: Commit & push exported files
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
           git add *.drawio.png *.drawio.svg || true
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changes"
           else
             git commit -m "Auto-export Draw.io diagrams"
             git push origin main
