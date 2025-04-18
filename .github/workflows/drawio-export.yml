@@ -1,0 +1,51 @@
+name: Export Draw.io diagrams
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # можно запустить вручную
+
+jobs:
+  export-diagrams:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false  # для ручного push
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install draw.io CLI
+        run: |
+          npm install -g @hediet/cli-drawio
+
+      - name: Export .drawio to PNG and SVG
+        run: |
+          for file in $(find . -name "*.drawio"); do
+            base="${file%.drawio}"
+            echo "Exporting $file..."
+            cli-drawio export "$file" --format png --output "${base}.drawio.png"
+            cli-drawio export "$file" --format svg --output "${base}.drawio.svg"
+          done
+
+      - name: Commit and push exported files
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add *.drawio.png *.drawio.svg || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-export Draw.io diagrams"
+            git push origin main
+          fi
+        env:
+          # чтобы push работал
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
