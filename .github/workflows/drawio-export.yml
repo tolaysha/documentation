@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # можно запустить вручную
+  workflow_dispatch:
 
 jobs:
   export-diagrams:
@@ -13,25 +13,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          persist-credentials: false  # для ручного push
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install draw.io CLI
+      - name: Download Draw.io (diagrams.net) CLI
         run: |
-          npm install -g @hediet/cli-drawio
+          curl -L -o drawio.AppImage https://github.com/jgraph/drawio-desktop/releases/download/v21.7.2/drawio-x86_64-21.7.2.AppImage
+          chmod +x drawio.AppImage
 
       - name: Export .drawio to PNG and SVG
         run: |
           for file in $(find . -name "*.drawio"); do
             base="${file%.drawio}"
             echo "Exporting $file..."
-            cli-drawio export "$file" --format png --output "${base}.drawio.png"
-            cli-drawio export "$file" --format svg --output "${base}.drawio.svg"
+            ./drawio.AppImage --export "$file" --output "${base}.drawio.png" --format png
+            ./drawio.AppImage --export "$file" --output "${base}.drawio.svg" --format svg
           done
 
       - name: Commit and push exported files
@@ -47,5 +41,4 @@ jobs:
             git push origin main
           fi
         env:
-          # чтобы push работал
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
