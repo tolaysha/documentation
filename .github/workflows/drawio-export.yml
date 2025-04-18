@@ -11,26 +11,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: docker build -t drawio-exporter .
-
-      - name: Run drawio-export in container
+      - name: Install Snap and Draw.io
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            drawio-exporter
+          sudo apt update
+          sudo apt install -y snapd
+          sudo snap install drawio
 
-      - name: Commit & push exported files
+      - name: Export .drawio to PNG and SVG
+        run: |
+          for file in $(find . -name "*.drawio"); do
+            base="${file%.drawio}"
+            echo "Exporting $file..."
+            drawio --export "$file" --output "${base}.drawio.png" --format png
+            drawio --export "$file" --output "${base}.drawio.svg" --format svg
+          done
+
+      - name: Commit and push exported files
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
           git add *.drawio.png *.drawio.svg || true
           if git diff --cached --quiet; then
-            echo "No changes"
+            echo "No changes to commit"
           else
             git commit -m "Auto-export Draw.io diagrams"
             git push origin main
